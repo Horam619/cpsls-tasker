@@ -1,0 +1,6 @@
+{
+  "name": "cpsls-tasker",
+  "private": true,
+  "scripts": { "build": "esbuild src/app.js --bundle --minify --format=iife --target=safari15 --outfile=site/app.js" },
+  "devDependencies": { "esbuild": "^0.25.0", "firebase": "12.19.0" }
+}

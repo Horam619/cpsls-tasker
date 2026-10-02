@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CPSLS Tasker</title>
+<meta name="description" content="Aufgaben und tägliches KI-Briefing für CPSLS">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0A0B" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CPSLS">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+@font-face{font-family:"Archivo";src:url("fonts/Archivo-var.ttf") format("truetype");font-weight:100 900;font-stretch:62% 125%;font-display:block}
+@font-face{font-family:"IBM Plex Mono";src:url("fonts/IBMPlexMono-Regular.ttf") format("truetype");font-weight:400;font-display:block}
+@font-face{font-family:"IBM Plex Mono";src:url("fonts/IBMPlexMono-Medium.ttf") format("truetype");font-weight:500;font-display:block}
+ol.steps{margin:20px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:64ch}
+ol.steps li::marker{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
+.form-foot{flex-wrap:wrap}
+</style>
+<style>
+/* Layout: severe white sheet, oversized expanded uppercase headings, hairline rules, mono spec labels like a garment label. Sidebar on desktop, bottom bar on phones. */
+:root{
+  --paper:#FFFFFF; --ink:#0B0B0B; --mute:#77777A; --line:#E4E4E6; --wash:#F4F4F5; --invert:#FFFFFF;
+  --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --nav-w:216px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0A0A0B; --ink:#F1F1F0; --mute:#8B8B8F; --line:#252527; --wash:#141416; --invert:#0A0A0B; color-scheme:dark } }
+:root[data-theme="dark"]{ --paper:#0A0A0B; --ink:#F1F1F0; --mute:#8B8B8F; --line:#252527; --wash:#141416; --invert:#0A0A0B; color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:1.5px solid var(--ink);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+
+.app{display:grid;grid-template-columns:var(--nav-w) minmax(0,1fr);min-height:100vh}
+nav.side{border-right:1px solid var(--line);padding:28px 24px;display:flex;flex-direction:column;gap:40px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.wordmark{font-family:var(--f-display);font-weight:900;font-stretch:125%;font-size:22px;letter-spacing:-.02em;text-transform:uppercase;line-height:.9}
+.wordmark small{display:block;font-family:var(--f-mono);font-weight:400;font-size:10px;letter-spacing:.14em;margin-top:8px;color:var(--mute)}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.navlist button{text-align:left;padding:9px 0;font-weight:600;font-stretch:110%;text-transform:uppercase;font-size:13px;letter-spacing:.04em;color:var(--mute);display:flex;justify-content:space-between;align-items:baseline}
+.navlist button[aria-current="true"]{color:var(--ink)}
+.navlist button[aria-current="true"]::before{content:"";}
+.navlist .count{font-family:var(--f-mono);font-size:11px;font-weight:400}
+.side-foot{margin-top:auto;color:var(--mute);font-size:12px}
+
+main{padding-inline:clamp(16px,4vw,56px);padding-block:28px 96px;min-width:0}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--ink);padding-bottom:10px}
+.topline .mono{color:var(--ink)}
+
+h1.hero{font-family:var(--f-display);font-weight:900;font-stretch:125%;text-transform:uppercase;letter-spacing:-.045em;line-height:.82;font-size:clamp(48px,10.5vw,148px);margin:28px 0 0;text-wrap:balance;overflow-wrap:anywhere}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:18px;color:var(--mute)}
+.hero-meta b{color:var(--ink);font-weight:500}
+
+section.block{margin-top:56px}
+.block-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+h2{font-family:var(--f-display);font-weight:800;font-stretch:115%;text-transform:uppercase;letter-spacing:-.01em;font-size:20px;margin:0}
+.btn{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px;border:1px solid var(--ink);background:var(--ink);color:var(--invert);white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:not(:disabled):hover{opacity:.82}
+.link{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;color:var(--mute)}
+.link:hover{color:var(--ink)}
+
+/* Composer */
+.composer{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:0;border:1px solid var(--ink);margin-top:20px}
+.composer input[type=text]{border:0;padding:14px 16px;background:transparent;min-width:0;font-size:15px}
+.composer input::placeholder{color:var(--mute)}
+.composer select,.composer input[type=date]{border:0;border-left:1px solid var(--line);background:transparent;padding:0 12px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.composer .prio{border-left:1px solid var(--line);padding:0 12px;display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.composer .btn{border:0}
+textarea,input,select{outline:none}
+
+/* Task list */
+ul.tasks{list-style:none;margin:0;padding:0}
+.task{display:grid;grid-template-columns:22px minmax(0,1fr) auto 24px;gap:16px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line)}
+.chk{width:16px;height:16px;border:1.5px solid var(--ink);margin-top:3px;position:relative}
+.task.done .chk{background:var(--ink)}
+.task.done .chk::after{content:"";position:absolute;left:4px;top:0;width:5px;height:9px;border:solid var(--invert);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.t-main{min-width:0;cursor:pointer}
+.t-title{font-weight:600;font-stretch:105%;font-size:15px;line-height:1.3}
+.task.done .t-title{text-decoration:line-through;color:var(--mute)}
+.t-note{color:var(--mute);font-size:13.5px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:68ch}
+.task.open .t-note{-webkit-line-clamp:unset;display:block}
+.t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;color:var(--mute);text-align:right}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:2px 6px;color:var(--ink)}
+.tag.hi{background:var(--ink);color:var(--invert);border-color:var(--ink)}
+.tag.ex{border-style:dashed;color:var(--mute)}
+.due.late{color:var(--ink);font-weight:500}
+.del{color:var(--mute);font-size:18px;line-height:1;opacity:0;transition:opacity .15s}
+.task:hover .del,.del:focus-visible{opacity:1}
+@media (hover:none){.del{opacity:.6}}
+.empty{padding:28px 0;color:var(--mute);max-width:56ch}
+.empty b{color:var(--ink);font-weight:600}
+
+/* Brief */
+.brief-focus{font-family:var(--f-display);font-stretch:100%;font-weight:300;font-size:clamp(20px,2.4vw,28px);line-height:1.2;letter-spacing:-.01em;margin:22px 0 6px;max-width:34ch;text-wrap:balance}
+.proposals{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0;margin-top:18px;border-top:1px solid var(--ink);border-left:1px solid var(--line)}
+.prop{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.prop .p-top{display:flex;justify-content:space-between;gap:8px}
+.prop h3{margin:0;font-weight:700;font-stretch:108%;font-size:16px;line-height:1.25;text-transform:none}
+.prop p{margin:0;color:var(--mute);font-size:13.5px}
+.prop .p-act{margin-top:auto;display:flex;gap:16px;align-items:center;padding-top:6px}
+.prop.accepted{background:var(--wash)}
+.prop.accepted .p-act,.prop.dismissed .p-act{display:none}
+.prop.dismissed{opacity:.35}
+.prop .state{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:auto}
+.loading{display:flex;align-items:center;gap:12px;padding:28px 0;color:var(--mute)}
+.bar{width:120px;height:1px;background:var(--line);position:relative;overflow:hidden}
+.bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--ink);animation:slide 1.2s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+@media (prefers-reduced-motion:reduce){.bar::after{animation:none;width:100%}}
+
+/* Filter chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px}
+.chip{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border:1px solid var(--line)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--invert)}
+
+/* Brand form */
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 32px;margin-top:24px;max-width:960px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.field input,.field textarea{border:0;border-bottom:1px solid var(--ink);background:transparent;padding:8px 0;font-size:16px;resize:vertical}
+.field textarea{min-height:70px}
+.form-foot{grid-column:1/-1;display:flex;gap:16px;align-items:center}
+
+/* Tech pack placeholder */
+.sheet{margin-top:24px;border:1px solid var(--ink);max-width:960px}
+.sheet-head{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--ink)}
+.sheet-head div{padding:10px 12px;border-right:1px solid var(--line)}
+.sheet-head div:last-child{border-right:0}
+.sheet-head span{display:block;color:var(--mute)}
+.sheet-head b{font-weight:600;font-size:14px}
+.pom-wrap{overflow-x:auto}
+table.pom{width:100%;border-collapse:collapse;min-width:520px;font-variant-numeric:tabular-nums}
+.pom th,.pom td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;font-size:13px}
+.pom th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:400}
+.pom td.ph{color:var(--line)}
+.sheet-foot{padding:16px 12px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+.soon{max-width:60ch;color:var(--mute);margin-top:18px}
+
+.notice{margin-top:16px;padding:10px 12px;border:1px dashed var(--mute);color:var(--mute);font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--invert);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;z-index:20;max-width:calc(100vw - 32px)}
+
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:10;background:var(--paper);border-right:0;border-top:1px solid var(--ink);padding:0 8px env(safe-area-inset-bottom,0px);flex-direction:row;gap:0}
+  .wordmark,.side-foot{display:none}
+  .navlist{flex-direction:row;width:100%}
+  .navlist button{flex:1;justify-content:center;padding:14px 4px;font-size:11px}
+  .navlist .count{display:none}
+  .composer{grid-template-columns:1fr 1fr}
+  .composer input[type=text]{grid-column:1/-1;border-bottom:1px solid var(--line)}
+  .composer select,.composer input[type=date],.composer .prio{border-left:0;border-bottom:1px solid var(--line);padding:12px}
+  .composer select{border-right:1px solid var(--line)}
+  .composer .prio{border-right:1px solid var(--line)}
+  .composer .btn{padding:14px}
+  .form{grid-template-columns:minmax(0,1fr)}
+  .sheet-head{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .task{grid-template-columns:22px minmax(0,1fr) 24px}
+  .t-meta{grid-column:2;flex-direction:row;flex-wrap:wrap;align-items:center;text-align:left}
+  .del{grid-column:3;grid-row:1}
+  .toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+}
+</style>
+
+<style>
+:root{--muted:var(--mute)}
+.muted{color:var(--mute)}
+.head-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+main{padding-top:calc(28px + env(safe-area-inset-top,0px))}
+body:not([data-phase="app"]) .app{grid-template-columns:minmax(0,1fr)}
+body:not([data-phase="app"]) nav.side{display:none}
+.gate{max-width:640px;margin:0 auto;padding-block:8px 40px}
+.wordmark.big{font-size:30px;margin-bottom:8px}
+h1.hero.sm{font-size:clamp(44px,9vw,84px);margin-top:28px}
+.form.one{grid-template-columns:minmax(0,1fr)}
+.gate .steps a,.steps a{color:var(--ink)}
+.nav-short{display:none}
+textarea#cfg{font-family:var(--f-mono);font-size:12px}
+@media (max-width:820px){
+  .nav-full{display:none}.nav-short{display:inline}
+  main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  input,select,textarea{font-size:16px!important}
+  h1.hero{font-size:clamp(44px,15vw,96px)}
+}
+</style>
+</head>
+<body data-phase="boot">
+<div class="app">
+  <nav class="side" aria-label="Bereiche">
+    <div class="wordmark">CPSLS<br>Tasker<small>Brand Operations</small></div>
+    <div class="navlist" id="nav">
+      <button data-view="today" aria-current="true">Heute <span class="count" id="c-today"></span></button>
+      <button data-view="all" aria-current="false">Aufgaben <span class="count" id="c-all"></span></button>
+      <button data-view="brand" aria-current="false">Marke</button>
+      <button data-view="techpack" aria-current="false"><span class="nav-full">Tech Packs</span><span class="nav-short">Tech</span></button>
+      <button data-view="settings" aria-current="false"><span class="nav-full">Einstellungen</span><span class="nav-short">Setup</span></button>
+    </div>
+    <div class="side-foot mono" id="sync"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="app.js?v=1" defer></script>
+</body>
+</html>
