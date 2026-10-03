@@ -1,0 +1,36 @@
+name: Erinnerungen
+on:
+  schedule:
+    - cron: "7 * * * *"      # stündlich; das Skript entscheidet nach Berliner Zeit
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Testmitteilung sofort senden"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  actions: write
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --omit=dev --no-audit --no-fund
+        working-directory: reminders
+      - run: node remind.mjs
+        working-directory: reminders
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VAPID_PUBLIC_KEY: BDZnWoCrJtRiIrnEzkkdxMgDvj8zM-10OJijZiSbOUR5Ad_P-UV8m-SSrB6zhV-jcOq3MX5dijjZsjan3xcBcHI
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
+      # GitHub pausiert Zeitpläne in öffentlichen Repos nach 60 Tagen ohne Aktivität. Das hält sie wach.
+      - name: Zeitplan aktiv halten
+        if: always()
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/reminders.yml/enable" || true
+        env:
+          GH_TOKEN: ${{ github.token }}
